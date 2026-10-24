@@ -2,6 +2,8 @@ module;
 #include <GLFW/glfw3.h>
 module andromeda;
 
+import std.compat;
+
 namespace andromeda {
     void Application::initWindow() {
             if (glfwInit() == GLFW_FALSE) throw std::runtime_error{"Cannot initialise the GLFW library"};
@@ -23,4 +25,12 @@ namespace andromeda {
                 }
             };
         }
+
+    std::vector<const char*> Application::getRequiredGLFWExtensions() const {
+        uint32_t glfwExtensionCount{};
+        auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+        std::vector extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);        
+        return extensions;
+    }
 }

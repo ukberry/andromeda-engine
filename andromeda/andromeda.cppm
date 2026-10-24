@@ -31,6 +31,7 @@ export namespace andromeda {
 
     private:
         void initWindow();
+        std::vector<const char*> getRequiredGLFWExtensions() const;
 
         void initVulkan();
         void createInstance();
