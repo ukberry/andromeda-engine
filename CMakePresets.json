@@ -1,0 +1,55 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 30
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}"
+        },
+        {
+            "name": "debug",
+            "displayName": "Native Debug",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Native Release",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "clang-release",
+            "displayName": "Clang Release",
+            "inherits": "release",
+            "cacheVariables": {
+            },
+            "toolchainFile": "${sourceDir}/cmake/clang-toolchain.cmake"
+        },
+        {
+            "name": "mingw-release",
+            "displayName": "GCC MinGW Release",
+            "inherits": "release",
+            "toolchainFile": "${sourceDir}/cmake/mingw.cmake",
+            "cacheVariables": {
+                "Vulkan_INCLUDE_DIR": "$env{VULKAN_WIN_SDK}/Include",
+                "Vulkan_LIBRARY": "$env{VULKAN_WIN_SDK}/Lib/vulkan-1.lib",
+                "SLANGC_EXECUTABLE": "$env{SLANGC}"
+            }
+        }
+    ],
+    "buildPresets": [
+        { "name": "debug", "configurePreset": "debug" },
+        { "name": "release", "configurePreset": "release" },
+        { "name": "clang-release", "configurePreset": "clang-release"}
+    ]
+}
