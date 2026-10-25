@@ -36,10 +36,18 @@
             "toolchainFile": "${sourceDir}/cmake/clang-toolchain.cmake"
         },
         {
+            "name": "clang-debug",
+            "displayName": "Clang Debug",
+            "inherits": "debug",
+            "cacheVariables": {
+            },
+            "toolchainFile": "${sourceDir}/cmake/clang-toolchain.cmake"
+        },
+        {
             "name": "mingw-release",
             "displayName": "GCC MinGW Release",
             "inherits": "release",
-            "toolchainFile": "${sourceDir}/cmake/mingw.cmake",
+            "toolchainFile": "${sourceDir}/cmake/gcc-mingw.cmake",
             "cacheVariables": {
                 "Vulkan_INCLUDE_DIR": "$env{VULKAN_WIN_SDK}/Include",
                 "Vulkan_LIBRARY": "$env{VULKAN_WIN_SDK}/Lib/vulkan-1.lib",
