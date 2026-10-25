@@ -21,6 +21,8 @@ using namespace andromeda;
 
 void Application::initVulkan() {
     createInstance();
+    setupDebugMessages();
+    createSurface();
 }
 
 void Application::createInstance() {

@@ -30,6 +30,7 @@ export namespace andromeda {
         vk::raii::Context context;
         vk::raii::Instance instance {nullptr};
         vk::raii::DebugUtilsMessengerEXT debugMessenger {nullptr};
+        vk::raii::SurfaceKHR surface {nullptr};
 
     private:
         void initWindow();
@@ -37,6 +38,7 @@ export namespace andromeda {
 
         void initVulkan();
         void createInstance();
+        void createSurface();
 
         // Debug only
         void setupDebugMessages();
