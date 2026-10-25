@@ -1,5 +1,6 @@
 module;
 #include <GLFW/glfw3.h>
+#include <vulkan/vk_platform.h>
 export module andromeda;
 
 import vulkan;
@@ -28,6 +29,7 @@ export namespace andromeda {
 
         vk::raii::Context context;
         vk::raii::Instance instance {nullptr};
+        vk::raii::DebugUtilsMessengerEXT debugMessenger {nullptr};
 
     private:
         void initWindow();
@@ -35,5 +37,10 @@ export namespace andromeda {
 
         void initVulkan();
         void createInstance();
+
+        // Debug only
+        void setupDebugMessages();
+        static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
+            vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void*);
     };
 }

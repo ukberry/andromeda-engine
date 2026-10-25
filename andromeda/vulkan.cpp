@@ -1,3 +1,5 @@
+module;
+#include <vulkan/vk_platform.h>
 module andromeda;
 
 import vulkan;
@@ -70,4 +72,32 @@ void Application::createInstance() {
     instance = vk::raii::Instance{context, createInfo};
 }
 
+void Application::setupDebugMessages() {
+  if (!enableValidationLayers)
+    return;
 
+  using Severity = vk::DebugUtilsMessageSeverityFlagBitsEXT;
+  using Type = vk::DebugUtilsMessageTypeFlagBitsEXT;
+  vk::DebugUtilsMessageSeverityFlagsEXT severityFlags{Severity::eWarning |
+                                                      Severity::eError};
+  vk::DebugUtilsMessageTypeFlagsEXT typeFlags{
+      Type::eGeneral | Type::ePerformance | Type::eValidation};
+
+  vk::DebugUtilsMessengerCreateInfoEXT createInfo{
+      .messageSeverity = severityFlags, .messageType = typeFlags,
+      .pfnUserCallback = &debugCallback
+  };
+  debugMessenger = instance.createDebugUtilsMessengerEXT(createInfo);
+
+}
+
+VKAPI_ATTR vk::Bool32 VKAPI_CALL Application::debugCallback(
+    vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
+    vk::DebugUtilsMessageTypeFlagsEXT type,
+    const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
+  if (severity > vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
+    std::cerr << "Validation layer: type " << to_string(type)
+              << " msg: " << pCallbackData->pMessage << std::endl;
+  }
+  return vk::False;
+}
