@@ -26,5 +26,8 @@ target_sources(${ANDROMEDA}
     BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES andromeda.cppm
 )
+if (NOT MSVC)
+target_compile_options(${ANDROMEDA} PUBLIC -Werror -Wall -Wextra -Wpedantic -Wnarrowing -Wconversion)
+endif()
 target_sources(${ANDROMEDA} PRIVATE vulkan.cpp window.cpp device.cpp)
 target_link_libraries(${ANDROMEDA} PRIVATE glfw VulkanCppModule)
