@@ -3,10 +3,9 @@ find_package(Vulkan REQUIRED)
 add_library(VulkanCppModule)
 add_library(Vulkan::cppm ALIAS VulkanCppModule)
 
-target_compile_definitions(VulkanCppModule PRIVATE
+target_compile_definitions(VulkanCppModule PUBLIC
     VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
     VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1)
-
 target_include_directories(VulkanCppModule PRIVATE "${Vulkan_INCLUDE_DIR}")
 target_compile_features(VulkanCppModule PUBLIC cxx_std_23)
 
@@ -27,5 +26,5 @@ target_sources(${ANDROMEDA}
     BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES andromeda.cppm
 )
-target_sources(${ANDROMEDA} PRIVATE vulkan.cpp window.cpp)
+target_sources(${ANDROMEDA} PRIVATE vulkan.cpp window.cpp device.cpp)
 target_link_libraries(${ANDROMEDA} PRIVATE glfw VulkanCppModule)

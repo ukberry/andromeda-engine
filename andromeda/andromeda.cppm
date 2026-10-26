@@ -13,6 +13,7 @@ export namespace andromeda {
         void run() {
             std::cout << "Starting Andromeda application" << std::endl;
             initWindow();
+            initVulkan();
 
             while (!glfwWindowShouldClose(window.get())) {
                 glfwPollEvents();
@@ -31,16 +32,29 @@ export namespace andromeda {
         vk::raii::Instance instance {nullptr};
         vk::raii::DebugUtilsMessengerEXT debugMessenger {nullptr};
         vk::raii::SurfaceKHR surface {nullptr};
+        vk::raii::PhysicalDevice physicalDevice {nullptr};
+
+        std::vector<const char*> requiredDeviceExtensions {
+            vk::KHRSwapchainExtensionName
+        };
 
     private:
         void initWindow();
         std::vector<const char*> getRequiredGLFWExtensions() const;
 
+        // vulkan.cpp
         void initVulkan();
         void createInstance();
+
+        // window.cpp
         void createSurface();
 
-        // Debug only
+        // device.cpp
+        bool isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice);
+        void selectPhysicalDevice();
+
+
+        // Debug only - vulkan.cpp
         void setupDebugMessages();
         static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
             vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void*);
