@@ -33,6 +33,9 @@ export namespace andromeda {
         vk::raii::DebugUtilsMessengerEXT debugMessenger {nullptr};
         vk::raii::SurfaceKHR surface {nullptr};
         vk::raii::PhysicalDevice physicalDevice {nullptr};
+        vk::raii::Device device {nullptr};
+        uint32_t queueIndex {~0u};
+        vk::raii::Queue queue {nullptr};
 
         std::vector<const char*> requiredDeviceExtensions {
             vk::KHRSwapchainExtensionName
@@ -52,6 +55,7 @@ export namespace andromeda {
         // device.cpp
         bool isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice);
         void selectPhysicalDevice();
+        void createLogicalDevice();
 
 
         // Debug only - vulkan.cpp

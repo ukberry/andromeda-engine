@@ -50,3 +50,43 @@ void Application::selectPhysicalDevice() {
     auto deviceProperties = physicalDevice.getProperties();
     std::cout << std::format("Using device: {:s}\nDriver: {}\n", deviceProperties.deviceName, deviceProperties.driverVersion);
 }
+
+void Application::createLogicalDevice() {
+    const std::vector<vk::QueueFamilyProperties>& qFamilyProperties {physicalDevice.getQueueFamilyProperties()};
+    auto indices { std::views::iota(0uz, qFamilyProperties.size())};
+    
+    auto graphicsQFP = std::ranges::find_if(indices, [&](std::uint32_t idx) {
+        const auto& qfp { qFamilyProperties[idx] };
+
+        return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0) && physicalDevice.getSurfaceSupportKHR(idx, *surface);
+    });
+
+    queueIndex = (graphicsQFP != indices.end()) ? static_cast<std::uint32_t>(*graphicsQFP) : ~0u;
+    if(queueIndex == ~0u) throw std::runtime_error{"Could not find a queue for graphics."};
+
+    float queuePriority{ 0.5f };
+    vk::StructureChain< vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan11Features, vk::PhysicalDeviceVulkan13Features,
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT> featureChain {
+            {},
+            {.shaderDrawParameters = true},
+            {.synchronization2 = true, .dynamicRendering = true},
+            {.extendedDynamicState = true}
+        };
+
+        vk::DeviceQueueCreateInfo deviceQueueCreateInfo {
+            .queueFamilyIndex = queueIndex,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority
+        };
+        vk::DeviceCreateInfo deviceCreateInfo{
+            .pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
+            .queueCreateInfoCount = 1,
+            .pQueueCreateInfos = &deviceQueueCreateInfo,
+            .enabledExtensionCount = static_cast<std::uint32_t>(requiredDeviceExtensions.size()),
+            .ppEnabledExtensionNames = requiredDeviceExtensions.data()
+        };
+
+        std::uint32_t queueCount {0u};
+        device = vk::raii::Device{physicalDevice, deviceCreateInfo};
+        queue = vk::raii::Queue{device, queueIndex, queueCount};
+}

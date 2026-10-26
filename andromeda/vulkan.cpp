@@ -24,6 +24,7 @@ void Application::initVulkan() {
     setupDebugMessages();
     createSurface();
     selectPhysicalDevice();
+    createLogicalDevice();
 }
 
 void Application::createInstance() {
