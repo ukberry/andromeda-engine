@@ -3,7 +3,7 @@ message(STATUS "VULKAN_SDK: $ENV{VULKAN_SDK}")
 find_program(SLANGC_EXECUTABLE slangc HINTS $ENV{VULKAN_SDK}/bin REQUIRED)
 
 function (add_slang_shader TARGET)
-  cmake_parse_arguments ("SHADER" "TEST" "" "SOURCES" ${ARGN})
+  cmake_parse_arguments ("SHADER" "" "" "SOURCES" ${ARGN})
   set (SHADERS_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
   set (ENTRY_POINTS -entry vertMain -entry fragMain)
   add_custom_command (
