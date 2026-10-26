@@ -28,14 +28,25 @@ export namespace andromeda {
         constexpr static int height {600};
         std::unique_ptr<GLFWwindow,void(*)(GLFWwindow*)> window{nullptr, {}};
 
+        // Vulkan setup
         vk::raii::Context context;
         vk::raii::Instance instance {nullptr};
         vk::raii::DebugUtilsMessengerEXT debugMessenger {nullptr};
+
+        // Window surface setup
         vk::raii::SurfaceKHR surface {nullptr};
+
+        // Device setup
         vk::raii::PhysicalDevice physicalDevice {nullptr};
         vk::raii::Device device {nullptr};
         uint32_t queueIndex {~0u};
         vk::raii::Queue queue {nullptr};
+
+        // Swapchain setup
+        vk::raii::SwapchainKHR swapChain {nullptr};
+        vk::Extent2D swapChainExtent;
+        vk::SurfaceFormatKHR swapChainSurfaceFormat;
+        std::vector<vk::Image> swapChainImages;
 
         std::vector<const char*> requiredDeviceExtensions {
             vk::KHRSwapchainExtensionName

@@ -25,6 +25,7 @@ void Application::initVulkan() {
     createSurface();
     selectPhysicalDevice();
     createLogicalDevice();
+    createSwapChain();
 }
 
 void Application::createInstance() {

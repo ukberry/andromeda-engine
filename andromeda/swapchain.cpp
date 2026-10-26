@@ -6,6 +6,32 @@ import vulkan;
 using namespace andromeda;
 
 void Application::createSwapChain() {
+    const vk::SurfaceCapabilitiesKHR surfaceCapabilities { physicalDevice.getSurfaceCapabilitiesKHR(*surface)};
+    swapChainExtent = chooseSwapExtent(surfaceCapabilities);
+
+    std::uint32_t minImageCount = chooseSwapMinImageCount(surfaceCapabilities);
+
+    const std::vector<vk::SurfaceFormatKHR>& availableFormats { physicalDevice.getSurfaceFormatsKHR(*surface) };
+    swapChainSurfaceFormat = chooseSwapSurfaceFormat(availableFormats);
+
+    const std::vector<vk::PresentModeKHR>& availablePresentModes { physicalDevice.getSurfacePresentModesKHR(*surface) };
+    vk::PresentModeKHR presentMode { chooseSwapPresentMode(availablePresentModes) };
+
+    vk::SwapchainCreateInfoKHR swapChainCreateInfo {
+        .surface = *surface,
+        .minImageCount = minImageCount,
+        .imageFormat = swapChainSurfaceFormat.format,
+        .imageColorSpace = swapChainSurfaceFormat.colorSpace,
+        .imageExtent = swapChainExtent,
+        .imageArrayLayers = 1,
+        .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
+        .imageSharingMode = vk::SharingMode::eExclusive,
+        .preTransform = surfaceCapabilities.currentTransform,
+        .presentMode = presentMode,
+        .clipped = true
+    };
+    swapChain = vk::raii::SwapchainKHR{device, swapChainCreateInfo};
+    swapChainImages = swapChain.getImages();
     
 }
 
