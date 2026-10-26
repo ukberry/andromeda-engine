@@ -29,5 +29,5 @@ target_sources(${ANDROMEDA}
 if (NOT MSVC)
 target_compile_options(${ANDROMEDA} PUBLIC -Werror -Wall -Wextra -Wpedantic -Wnarrowing -Wconversion)
 endif()
-target_sources(${ANDROMEDA} PRIVATE vulkan.cpp window.cpp device.cpp)
+target_sources(${ANDROMEDA} PRIVATE vulkan.cpp window.cpp device.cpp swapchain.cpp)
 target_link_libraries(${ANDROMEDA} PRIVATE glfw VulkanCppModule)

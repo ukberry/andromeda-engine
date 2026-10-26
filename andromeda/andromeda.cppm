@@ -57,10 +57,29 @@ export namespace andromeda {
         void selectPhysicalDevice();
         void createLogicalDevice();
 
+        // swapchain.cpp
+        void createSwapChain();
+
+        vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities) const;
+        static std::uint32_t chooseSwapMinImageCount(const vk::SurfaceCapabilitiesKHR& capabilities);
+        static vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+        static vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+
 
         // Debug only - vulkan.cpp
         void setupDebugMessages();
         static VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
             vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void*);
     };
+
+    inline void assert(bool condition, std::string_view message = "") {
+        if(!condition) {
+            #ifdef NDEBUG
+                std::cerr << "Assertion failed! " << message << std::endl;
+                std::terminate();
+            #else
+                std::unreachable();
+            #endif
+        }
+    }
 }
