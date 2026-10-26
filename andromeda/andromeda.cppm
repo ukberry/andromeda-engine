@@ -47,6 +47,7 @@ export namespace andromeda {
         vk::Extent2D swapChainExtent;
         vk::SurfaceFormatKHR swapChainSurfaceFormat;
         std::vector<vk::Image> swapChainImages;
+        std::vector<vk::raii::ImageView> swapChainImageViews;
 
         std::vector<const char*> requiredDeviceExtensions {
             vk::KHRSwapchainExtensionName
@@ -70,6 +71,7 @@ export namespace andromeda {
 
         // swapchain.cpp
         void createSwapChain();
+        void createImageViews();
 
         vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities) const;
         static std::uint32_t chooseSwapMinImageCount(const vk::SurfaceCapabilitiesKHR& capabilities);

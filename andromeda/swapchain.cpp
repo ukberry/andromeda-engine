@@ -31,8 +31,28 @@ void Application::createSwapChain() {
         .clipped = true
     };
     swapChain = vk::raii::SwapchainKHR{device, swapChainCreateInfo};
-    swapChainImages = swapChain.getImages();
-    
+    swapChainImages = swapChain.getImages();   
+}
+
+void Application::createImageViews() {
+    assert (swapChainImageViews.empty());
+
+    constexpr std::uint32_t baseMipLevel {0};
+    constexpr std::uint32_t levelCount {1};
+    constexpr std::uint32_t baseArrayLayer {0};
+    constexpr std::uint32_t layerCount {0};
+
+    vk::ImageViewCreateInfo imageViewCreateInfo{
+        .viewType = vk::ImageViewType::e2D,
+        .format = swapChainSurfaceFormat.format,
+        .subresourceRange = {vk::ImageAspectFlagBits::eColor, baseMipLevel, levelCount,
+            baseArrayLayer, layerCount}
+    };
+
+    for (auto& image : swapChainImages) {
+        imageViewCreateInfo.image = image;
+        swapChainImageViews.emplace_back(device, imageViewCreateInfo);
+    }
 }
 
 vk::Extent2D Application::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities) const {
