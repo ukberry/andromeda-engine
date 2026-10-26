@@ -1,5 +1,5 @@
 {
-    "version": 3,
+    "version": 11,
     "cmakeMinimumRequired": {
         "major": 3,
         "minor": 30
@@ -52,8 +52,12 @@
                 "Vulkan_INCLUDE_DIR": "$env{VULKAN_WIN_SDK}/Include",
                 "Vulkan_LIBRARY": "$env{VULKAN_WIN_SDK}/Lib/vulkan-1.lib",
                 "SLANGC_EXECUTABLE": "$env{SLANGC}"
+            },
+            "$comment": "Add flag for GCC since it struggles with multiple definitions with modules",
+            "environment": {
+                "CXXFLAGS": "-Wl,--allow-multiple-definition"
             }
-        }
+        }        
     ],
     "buildPresets": [
         { "name": "debug", "configurePreset": "debug" },
