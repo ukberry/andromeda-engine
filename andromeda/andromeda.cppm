@@ -8,6 +8,9 @@ import std;
 
 export namespace andromeda {
 
+    // Resource ID's will be based on the FNV-1a hash of a string
+    typedef std::uint64_t resource_id;
+
     class Resource;
     class ResourceManager;
     template <typename T>
@@ -113,18 +116,36 @@ export namespace andromeda {
         }
     };
 
-    struct FNVHash {
-        const static std::uint64_t offset = 0xCBF29CE48422232ull;
-        const static std::uint64_t prime = 0x100000001B3ull;
-        constexpr static std::uint64_t hash(std::string_view str) noexcept {
-            std::uint64_t hash {offset};
+    template <typename T>
+    struct FNVConstants;
+
+    template <>
+    struct FNVConstants<std::uint64_t> {
+        static constexpr std::uint64_t offset =  0xCBF29CE48422232ull;
+        static constexpr std::uint64_t prime = 0x100000001B3ull;
+    };
+
+    template <>
+    struct FNVConstants<std::uint32_t> {
+        static constexpr std::uint32_t offset = 0x811C9DC5u;
+        static constexpr std::uint32_t prime = 0x01000193u;
+    };
+
+    template <class T = resource_id>
+    struct FNVHashBasic {
+        const static T offset { FNVConstants<T>::offset };
+        const static T prime { FNVConstants<T>::prime };
+        constexpr static T hash(std::string_view str) noexcept {
+            T hash {offset};
             for (char c : str) {
-                hash ^= static_cast<std::uint64_t>(c);
+                hash ^= static_cast<T>(c);
                 hash *= prime;
             }
             return hash;
         }
     };
+
+    using FNVHash = FNVHashBasic<std::uint64_t>;
 
     inline void assert(bool condition, std::string_view message = "") {
         if(!condition) {
@@ -140,6 +161,6 @@ export namespace andromeda {
     struct ResourceCategory {};
 } // namespace: andromeda
 
-export constexpr std::uint64_t operator""_fnv(const char* str, std::size_t size) noexcept {
+export constexpr andromeda::resource_id operator""_fnv(const char* str, std::size_t size) noexcept {
     return andromeda::FNVHash::hash(std::string_view(str,size));
 }
