@@ -4,8 +4,11 @@ add_library(VulkanCppModule)
 add_library(Vulkan::cppm ALIAS VulkanCppModule)
 
 target_compile_definitions(VulkanCppModule PUBLIC
-    VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
-    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1)
+    VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
+    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+    VULKAN_HPP_NO_EXCEPTIONS
+    VULKAN_HPP_RAII_NO_EXCEPTIONS
+    VULKAN_HPP_STD_USE_EXPECTED)
 target_include_directories(VulkanCppModule PRIVATE "${Vulkan_INCLUDE_DIR}")
 target_compile_features(VulkanCppModule PUBLIC cxx_std_23)
 
@@ -27,7 +30,7 @@ target_sources(${ANDROMEDA}
     FILES andromeda.cppm utility.cppm application.cppm resources.cppm
 )
 if (NOT MSVC)
-target_compile_options(${ANDROMEDA} PUBLIC -Werror -Wall -Wextra -Wpedantic -Wnarrowing -Wconversion)
+target_compile_options(${ANDROMEDA} PUBLIC -fno-rtti -fno-exceptions -Werror -Wall -Wextra -Wpedantic -Wnarrowing -Wconversion)
 endif()
 target_sources(${ANDROMEDA} PRIVATE vulkan.cpp window.cpp device.cpp swapchain.cpp)
 target_link_libraries(${ANDROMEDA} PRIVATE glfw VulkanCppModule)

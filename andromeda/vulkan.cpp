@@ -44,28 +44,32 @@ void Application::createInstance() {
     }
 
     const auto layerProperties { context.enumerateInstanceLayerProperties() };
+    assert(layerProperties.has_value(), "Unable to ascertain layer properties");
     auto unsupportedIt = std::ranges::find_if(requiredLayers, [&layerProperties](const auto& requiredLayer) {
-        return std::ranges::none_of(layerProperties, [requiredLayer](const auto& layerProperty) {
+        return std::ranges::none_of(layerProperties.value, [requiredLayer](const auto& layerProperty) {
             return std::strcmp(layerProperty.layerName, requiredLayer) == 0;
         });
     });
 
     if (unsupportedIt != requiredLayers.end()) {
-        throw std::runtime_error{"Required layer not supported: " + std::string{*unsupportedIt}};
+        std::cerr << "Required layer not supported: " + std::string{*unsupportedIt} << std::endl;
+        std::terminate();
     }
 
     auto requiredExtensions { getRequiredGLFWExtensions() };
     if (enableValidationLayers) requiredExtensions.push_back(vk::EXTDebugUtilsExtensionName);
 
     const auto extensionProperties { context.enumerateInstanceExtensionProperties() };
+    assert(extensionProperties.has_value(), "Unable to determine extension properties");
     unsupportedIt = std::ranges::find_if(requiredExtensions, [&extensionProperties](const auto& requiredExtension){
-        return std::ranges::none_of(extensionProperties,[requiredExtension](const auto& extensionProperty) {
+        return std::ranges::none_of(extensionProperties.value,[requiredExtension](const auto& extensionProperty) {
             return std::strcmp(extensionProperty.extensionName, requiredExtension) == 0;
         });
     });
 
     if (unsupportedIt != requiredExtensions.end()) {
-        throw std::runtime_error("Required extension not supported: " + std::string{*unsupportedIt});
+        std::cerr << "Required extension not supported: " + std::string{*unsupportedIt} << std::endl;
+        std::terminate();
     }
 
     vk::InstanceCreateInfo createInfo{
@@ -75,7 +79,10 @@ void Application::createInstance() {
         .enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size()),
         .ppEnabledExtensionNames = requiredExtensions.data()
     };
-    instance = vk::raii::Instance{context, createInfo};
+    //instance = vk::raii::Instance{context, createInfo};
+    auto instance_create {context.createInstance(createInfo)};
+    assert(instance_create.has_value(), "Could not create vulkan instance");
+    instance = std::move(*instance_create);
 }
 
 void Application::setupDebugMessages() {
@@ -93,8 +100,9 @@ void Application::setupDebugMessages() {
       .messageSeverity = severityFlags, .messageType = typeFlags,
       .pfnUserCallback = &debugCallback
   };
-  debugMessenger = instance.createDebugUtilsMessengerEXT(createInfo);
-
+  auto result {instance.createDebugUtilsMessengerEXT(createInfo)};
+  assert(result.has_value(), "Could not create a debug messenger");
+  debugMessenger = std::move(*result);
 }
 
 VKAPI_ATTR vk::Bool32 VKAPI_CALL Application::debugCallback(

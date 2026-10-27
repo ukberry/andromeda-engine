@@ -9,7 +9,10 @@ import std.compat;
 using namespace andromeda;
 
 void Application::initWindow() {
-        if (glfwInit() == GLFW_FALSE) throw std::runtime_error{"Cannot initialise the GLFW library"};
+        if (glfwInit() == GLFW_FALSE) {
+            std::cerr << "Cannot initialise the GLFW library!" << std::endl;
+            std::terminate(); 
+        }
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // TODO: Support resizeable window
@@ -41,7 +44,8 @@ void Application::createSurface() {
     typedef struct VkSurfaceKHR_T *VkSurfaceKHR;
     VkSurfaceKHR _surface;
     if (glfwCreateWindowSurface(*instance, window.get(), nullptr, &_surface)) {
-        throw std::runtime_error("Failed to create a window surface!");
+        std::cerr << "Vulkan cannot initialise. Could not create a window surface.\n";
+        std::terminate();
     }
     surface = vk::raii::SurfaceKHR(instance, _surface);
 }

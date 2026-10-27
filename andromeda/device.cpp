@@ -14,11 +14,12 @@ bool Application::isDeviceSuitable(
       });
 
   auto deviceExtensions = physicalDevice.enumerateDeviceExtensionProperties();
+  assert(deviceExtensions.has_value());
   bool supportsRequiredExtensions = std::ranges::all_of(
       requiredDeviceExtensions,
       [&deviceExtensions](const auto &requiredExtension) {
         return std::ranges::any_of(
-            deviceExtensions, [requiredExtension](const auto &deviceExtension) {
+            deviceExtensions.value, [requiredExtension](const auto &deviceExtension) {
               return std::strcmp(deviceExtension.extensionName,
                                  requiredExtension) == 0;
             });
@@ -38,13 +39,15 @@ bool Application::isDeviceSuitable(
 }
 
 void Application::selectPhysicalDevice() {
-    std::vector<vk::raii::PhysicalDevice> physicalDevices = instance.enumeratePhysicalDevices();
+    auto [result,physicalDevices] = instance.enumeratePhysicalDevices();
+    assert(result == vk::Result::eSuccess,"Enumerate physical devices failed.");
     auto deviceIt = std::ranges::find_if(physicalDevices,[&](const auto& physicalDevice) {
         return isDeviceSuitable(physicalDevice);
     });
 
     if (deviceIt == physicalDevices.end()) {
-        throw std::runtime_error{"Failed to find a suitable GPU!"};
+        std::cerr << "Failed to find a suitable GPU!" << std::endl;
+        std::terminate();
     }
     physicalDevice = *deviceIt;
     auto deviceProperties = physicalDevice.getProperties();
@@ -57,12 +60,15 @@ void Application::createLogicalDevice() {
     
     auto graphicsQFP = std::ranges::find_if(indices, [&](std::uint32_t idx) {
         const auto& qfp { qFamilyProperties[idx] };
-
-        return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0) && physicalDevice.getSurfaceSupportKHR(idx, *surface);
+        auto surface_support = physicalDevice.getSurfaceSupportKHR(idx, *surface);
+        return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0) && surface_support.has_value();
     });
 
     queueIndex = (graphicsQFP != indices.end()) ? static_cast<std::uint32_t>(*graphicsQFP) : ~0u;
-    if(queueIndex == ~0u) throw std::runtime_error{"Could not find a queue for graphics."};
+    if(queueIndex == ~0u) {
+        std::cerr << "Could not find a suitable queue for graphics" << std::endl;
+        std::terminate();
+    };
 
     float queuePriority{ 0.5f };
     vk::StructureChain< vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan11Features, vk::PhysicalDeviceVulkan13Features,
@@ -87,6 +93,8 @@ void Application::createLogicalDevice() {
         };
 
         std::uint32_t queueCount {0u};
-        device = vk::raii::Device{physicalDevice, deviceCreateInfo};
-        queue = vk::raii::Queue{device, queueIndex, queueCount};
+        auto [result,device_create] = physicalDevice.createDevice(deviceCreateInfo);
+        assert(result == vk::Result::eSuccess, "Failed to created a physical device reference");
+        device = std::move(device_create);
+        queue = device.getQueue(queueIndex, queueCount);
 }

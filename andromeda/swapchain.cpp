@@ -6,15 +6,15 @@ import vulkan;
 using namespace andromeda;
 
 void Application::createSwapChain() {
-    const vk::SurfaceCapabilitiesKHR surfaceCapabilities { physicalDevice.getSurfaceCapabilitiesKHR(*surface)};
+    const vk::SurfaceCapabilitiesKHR surfaceCapabilities { physicalDevice.getSurfaceCapabilitiesKHR(*surface).value };
     swapChainExtent = chooseSwapExtent(surfaceCapabilities);
 
     std::uint32_t minImageCount = chooseSwapMinImageCount(surfaceCapabilities);
 
-    const std::vector<vk::SurfaceFormatKHR>& availableFormats { physicalDevice.getSurfaceFormatsKHR(*surface) };
+    const std::vector<vk::SurfaceFormatKHR>& availableFormats { physicalDevice.getSurfaceFormatsKHR(*surface).value };
     swapChainSurfaceFormat = chooseSwapSurfaceFormat(availableFormats);
 
-    const std::vector<vk::PresentModeKHR>& availablePresentModes { physicalDevice.getSurfacePresentModesKHR(*surface) };
+    const std::vector<vk::PresentModeKHR>& availablePresentModes { physicalDevice.getSurfacePresentModesKHR(*surface).value };
     vk::PresentModeKHR presentMode { chooseSwapPresentMode(availablePresentModes) };
 
     vk::SwapchainCreateInfoKHR swapChainCreateInfo {
@@ -30,8 +30,13 @@ void Application::createSwapChain() {
         .presentMode = presentMode,
         .clipped = true
     };
-    swapChain = vk::raii::SwapchainKHR{device, swapChainCreateInfo};
-    swapChainImages = swapChain.getImages();   
+    //swapChain = vk::raii::SwapchainKHR{device, swapChainCreateInfo};
+    auto swapchain_create {device.createSwapchainKHR(swapChainCreateInfo)};
+    assert(swapchain_create.has_value(),"Could not create a swap chain");
+    swapChain = std::move(*swapchain_create);
+    auto images_create {swapChain.getImages()};
+    assert(images_create.has_value(),"Unable to get swapchain images");
+    swapChainImages = std::move(*images_create);   
 }
 
 void Application::createImageViews() {
@@ -51,7 +56,9 @@ void Application::createImageViews() {
 
     for (auto& image : swapChainImages) {
         imageViewCreateInfo.image = image;
-        swapChainImageViews.emplace_back(device, imageViewCreateInfo);
+        auto image_view {device.createImageView(imageViewCreateInfo)};
+        assert(image_view.has_value(), "Could not create an ImageView");
+        swapChainImageViews.push_back(std::move(*image_view));
     }
 }
 

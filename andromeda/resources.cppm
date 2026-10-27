@@ -93,7 +93,7 @@ export namespace andromeda {
         }
 
         template <typename T>
-        T* GetResource(std::string_view id) {
+        constexpr T* GetResource(std::string_view id) {
             return GetResource<T>( FNVHash::hash(id) );
         }
 
