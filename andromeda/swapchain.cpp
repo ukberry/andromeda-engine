@@ -45,7 +45,7 @@ void Application::createImageViews() {
     constexpr std::uint32_t baseMipLevel {0};
     constexpr std::uint32_t levelCount {1};
     constexpr std::uint32_t baseArrayLayer {0};
-    constexpr std::uint32_t layerCount {0};
+    constexpr std::uint32_t layerCount {1};
 
     vk::ImageViewCreateInfo imageViewCreateInfo{
         .viewType = vk::ImageViewType::e2D,
