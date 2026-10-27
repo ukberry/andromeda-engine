@@ -54,10 +54,11 @@ export namespace andromeda {
 
     inline void assert(bool condition, std::string_view message = "") {
         if(!condition) {
-            #ifdef NDEBUG
+            #ifndef NDEBUG
                 std::cerr << "Assertion failed! " << message << std::endl;
                 std::terminate();
             #else
+                (void)message;
                 std::unreachable();
             #endif
         }
