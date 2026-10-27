@@ -8,6 +8,19 @@ import std;
 
 export namespace andromeda {
 
+    class Resource;
+    class ResourceManager;
+    template <typename T>
+    class ResourceHandle;
+
+    struct Component {
+    public:
+        virtual ~Component() = default;
+        virtual void Update(float) {}
+    };
+
+    class MeshComponent final : public Component {};
+
     class Application {
     public:
         void run() {
@@ -85,6 +98,34 @@ export namespace andromeda {
             vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void*);
     };
 
+    class TypeRegistry {
+    public:
+        template <typename Category, class T>
+        static int getTypeID() noexcept {
+            static const int id = nextID<Category>();
+            return id;
+        }
+    private:
+        template <class Category>
+        static inline int nextID() noexcept {
+            static int current_id{};
+            return current_id++;
+        }
+    };
+
+    struct FNVHash {
+        const static std::uint64_t offset = 0xCBF29CE48422232ull;
+        const static std::uint64_t prime = 0x100000001B3ull;
+        constexpr static std::uint64_t hash(std::string_view str) noexcept {
+            std::uint64_t hash {offset};
+            for (char c : str) {
+                hash ^= static_cast<std::uint64_t>(c);
+                hash *= prime;
+            }
+            return hash;
+        }
+    };
+
     inline void assert(bool condition, std::string_view message = "") {
         if(!condition) {
             #ifdef NDEBUG
@@ -95,4 +136,10 @@ export namespace andromeda {
             #endif
         }
     }
+
+    struct ResourceCategory {};
+} // namespace: andromeda
+
+export constexpr std::uint64_t operator""_fnv(const char* str, std::size_t size) noexcept {
+    return andromeda::FNVHash::hash(std::string_view(str,size));
 }
