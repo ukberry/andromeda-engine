@@ -26,6 +26,3 @@ export namespace andromeda {
     struct ResourceCategory {};
 } // namespace: andromeda
 
-export constexpr andromeda::resource_id operator""_fnv(const char* str, std::size_t size) noexcept {
-    return andromeda::FNVHash::hash(std::string_view(str,size));
-}
