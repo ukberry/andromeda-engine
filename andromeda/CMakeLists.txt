@@ -24,7 +24,7 @@ target_sources(${ANDROMEDA}
     PUBLIC
     FILE_SET andromeda_module TYPE CXX_MODULES
     BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
-    FILES andromeda.cppm utility.cppm application.cppm
+    FILES andromeda.cppm utility.cppm application.cppm resources.cppm
 )
 if (NOT MSVC)
 target_compile_options(${ANDROMEDA} PUBLIC -Werror -Wall -Wextra -Wpedantic -Wnarrowing -Wconversion)
