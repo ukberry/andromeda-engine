@@ -178,9 +178,37 @@ export namespace andromeda {
             resourceId{FNVHash::hash(id)}, resourceManager{manager} {};
         ResourceHandle(resource_id id, ResourceManager *manager) : resourceId{id}, resourceManager{manager} {};
 
-        T* Get() const {
-            if (!resourceManager) return nullptr;
-            return resourceManager->GetResource<T>(resourceId);
+        ResourceHandle(const ResourceHandle&) = delete;
+        ResourceHandle& operator=(const ResourceHandle&) = delete;
+
+        ResourceHandle(ResourceHandle&& other) noexcept {
+            std::swap(resourceId, other.resourceId);
+            std::swap(resourceManager, other.resourceManager);
+        }
+        ResourceHandle& operator=(ResourceHandle&& other) noexcept {
+            std::swap(resourceId, other.resourceId);
+            std::swap(resourceManager, other.resourceManager);
+            return *this;
+        }
+
+        ~ResourceHandle() {
+            if (resourceId && resourceManager) resourceManager->Release<T>(resourceId);
+        }
+
+        T* Get() const noexcept {
+            return resourceManager ? resourceManager->GetResource<T>(resourceId) : nullptr;
+        }
+
+        T* operator->() const noexcept {
+            return Get();
+        }
+
+        T& operator*() const noexcept {
+            return *(Get());
+        }
+
+        explicit operator bool() const noexcept {
+            return resourceId != 0 && resourceManager != nullptr && Get() != nullptr;
         }
     };
 

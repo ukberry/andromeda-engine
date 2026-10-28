@@ -10,22 +10,14 @@ public:
 int main() {
     andromeda::ResourceManager rm;
 
-    rm.Load<andromeda::TestResource>("TestingTesting");
-    rm.Load<andromeda::TestResource>("OneTwoOneTwo");
-    
+    auto resource1 = rm.Load<andromeda::TestResource>("TestingTesting");
 
-    //rm.Load<andromeda::TestResource>("TypeError","Whoops! Too many arguments");
+    {
+        auto resource2 = rm.Load<andromeda::TestResource>("OneTwoOneTwo");
+        std::cout << resource2->TestMessage() << std::endl;
+    }
 
-    auto test = rm.GetResource<andromeda::TestResource>("TestingTesting");
-    std::cout << test->TestMessage() << "\n";
-
-    auto test2 = rm.GetResource<andromeda::TestResource>("FakeResource");
-    std::cout << "Fake resource handle: " << test2 << std::endl; // Should be (nil)/nullptr
-
-    rm.Release<andromeda::TestResource>("TestingTesting");
-    
-    auto test3 = rm.GetResource<andromeda::TestResource>("OneTwoOneTwo");
-    std::cout << test3->TestMessage() << std::endl;
+    std::cout << resource1->TestMessage() << std::endl;
 
     // MyExampleApp app;
     // app.run();
