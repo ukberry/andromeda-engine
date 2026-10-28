@@ -37,12 +37,32 @@ export namespace andromeda {
 
     class TestResource final : public Resource {
     public:
-        explicit TestResource(resource_id id ) : Resource(id) {}
-        std::string TestMessage() const { return std::format("This is a test resource message. The type id for this class is {}",
-            TypeRegistry::getTypeID<ResourceCategory, TestResource>()); }
+        explicit TestResource(resource_id id ) : Resource(id), resourceId(id) {
+            std::cout << std::format("TestResource[{}] has been created\n",resourceId);
+        }
+
+        TestResource(const TestResource&) = delete;
+        TestResource& operator=(const TestResource&) = delete;
+
+        TestResource(TestResource&&) = default;
+        TestResource& operator=(TestResource&&) = default;
+        
+        ~TestResource() {
+            std::cout << std::format("TestResource[{}] has been destroyed\n",resourceId);
+        }
+
+        std::string TestMessage() const { return std::format("TestResource[{}]::TestMessage called. The type id for this class is {}",
+            resourceId,TypeRegistry::getTypeID<ResourceCategory, TestResource>()); }
     protected:
-        bool doLoad() { return true; }
-        void doUnload() {}
+        bool doLoad() { 
+            std::cout << std::format("TestResource[{}] has been loaded\n", resourceId);
+            return true;
+        }
+        void doUnload() {
+            std::cout << std::format("TestResource[{}] has been unloaded\n", resourceId);
+        }
+    private:
+        resource_id resourceId{};
     };
 
     template <class T>
@@ -97,12 +117,38 @@ export namespace andromeda {
             return GetResource<T>( FNVHash::hash(id) );
         }
 
-        template<typename T>
+        template <typename T>
         bool HasResource(const std::string_view resourceId) {
             static_assert(std::is_base_of<Resource, T>::value, "HasResource: Type must be derived from Resource!");
             const auto& scoped_resource { resources[TypeRegistry::getTypeID<ResourceCategory,T>()] };
             const auto it { scoped_resource.find(FNVHash::hash(resourceId)) };
             return it != resources.end();
+        }
+
+        template <typename T>
+        void Release(resource_id id) {
+            static_assert(std::is_base_of<Resource, T>::value, "HasResource: Type must be derived from Resource!");
+            
+            const auto type_id {TypeRegistry::getTypeID<ResourceCategory,T>()};
+            auto& scoped_resource { resources[type_id] };
+            auto& scoped_references { refCounts[type_id] };
+            
+            auto it = scoped_references.find(id);
+            if (it != scoped_references.end()) {
+                it->second.refCount--;
+
+                if(it->second.refCount > 0) return;
+                auto resourceIt {scoped_resource.find(id)};
+
+                resourceIt->second->Unload();
+                scoped_resource.erase(resourceIt);
+                scoped_references.erase(it);
+            }
+        }
+
+        template <typename T>
+        constexpr void Release(std::string_view id) {
+            return Release<T>( FNVHash::hash(id) );
         }
 
     private:
