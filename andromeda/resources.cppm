@@ -6,6 +6,12 @@ export namespace andromeda {
 
     // This separates the type IDs from other collections (ie Components)
     struct ResourceCategory {};
+
+    // Forward declaration of Resource for template concept
+    class Resource;
+
+    template <class T>
+    concept ResourceConcept = std::is_base_of_v<Resource, T> && !std::is_copy_constructible_v<T> && !std::is_copy_assignable_v<T>;
     
     /** @brief A base class for resource management through the ResourceManager class.
      */
@@ -70,14 +76,15 @@ export namespace andromeda {
 
     class ResourceManager {
     public:
-        template <typename T>
-        ResourceHandle<T> Load(std::string_view id) {
-            return Load<T>( FNVHash::hash(id) );
+        template <ResourceConcept T, typename... Args>
+        requires std::is_constructible_v<T, resource_id, Args...>
+        ResourceHandle<T> Load(std::string_view id, Args&&... args) {
+            return Load<T>( FNVHash::hash(id), std::forward<Args>(args)...);
         }
 
-        template <typename T>
-        ResourceHandle<T> Load(resource_id id) {
-            static_assert(std::is_base_of<Resource, T>::value, "Load: Type must be derived from Resource!");
+        template <ResourceConcept T, typename... Args>
+        requires std::is_constructible_v<T, resource_id, Args...>
+        ResourceHandle<T> Load(resource_id id, Args&&... args) {
 
             auto type_id {TypeRegistry::getTypeID<ResourceCategory,T>()};
             auto& scoped_resources { resources[type_id] };
@@ -89,7 +96,7 @@ export namespace andromeda {
                 return ResourceHandle<T>(id, this);
             }
 
-            auto resource { std::make_shared<T>(id) };
+            auto resource { std::make_shared<T>(id, std::forward<Args>(args)...) };
             if(!resource->Load()) {
                 return {};
             }
@@ -100,9 +107,8 @@ export namespace andromeda {
             return ResourceHandle<T>(id, this);
         }
 
-        template <typename T>
+        template <ResourceConcept T>
         T* GetResource(resource_id id) {
-            static_assert(std::is_base_of<Resource, T>::value, "GetResource: Type must be derived from Resource!");
             auto type_id {TypeRegistry::getTypeID<ResourceCategory, T>()};
 
             auto& scoped_resources { resources[type_id] };
@@ -112,22 +118,20 @@ export namespace andromeda {
             return nullptr;
         }
 
-        template <typename T>
+        template <ResourceConcept T>
         constexpr T* GetResource(std::string_view id) {
             return GetResource<T>( FNVHash::hash(id) );
         }
 
-        template <typename T>
+        template <ResourceConcept T>
         bool HasResource(const std::string_view resourceId) {
-            static_assert(std::is_base_of<Resource, T>::value, "HasResource: Type must be derived from Resource!");
             const auto& scoped_resource { resources[TypeRegistry::getTypeID<ResourceCategory,T>()] };
             const auto it { scoped_resource.find(FNVHash::hash(resourceId)) };
             return it != resources.end();
         }
 
-        template <typename T>
+        template <ResourceConcept T>
         void Release(resource_id id) {
-            static_assert(std::is_base_of<Resource, T>::value, "HasResource: Type must be derived from Resource!");
             
             const auto type_id {TypeRegistry::getTypeID<ResourceCategory,T>()};
             auto& scoped_resource { resources[type_id] };
@@ -146,7 +150,7 @@ export namespace andromeda {
             }
         }
 
-        template <typename T>
+        template <ResourceConcept T>
         constexpr void Release(std::string_view id) {
             return Release<T>( FNVHash::hash(id) );
         }
