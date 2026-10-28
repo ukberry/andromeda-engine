@@ -11,39 +11,30 @@ export namespace andromeda {
     class Resource;
 
     template <class T>
-    concept ResourceConcept = std::is_base_of_v<Resource, T> && !std::is_copy_constructible_v<T> && !std::is_copy_assignable_v<T>;
+    concept ResourceConcept = requires (T* resource) {
+        {resource->Load()} -> std::same_as<bool>;
+        {resource->Unload()} -> std::same_as<void>;
+        std::is_base_of_v<Resource,T>;
+    };
+    // template <class T>
+    // concept ResourceCRTP = std::is_base_of_v<BasicResource<T>, T> && !std::is_copy_constructible_v<T> && !std::is_copy_assignable_v<T>;
     
     /** @brief A base class for resource management through the ResourceManager class.
      */
     class Resource {
     public:
-        explicit Resource(resource_id id) : resourceId(id) {}
-        explicit Resource(const std::string_view id) : resourceId( FNVHash::hash(id) ) {}
-        virtual ~Resource() = default;
 
         resource_id GetId() const{ return resourceId; }
         bool IsLoaded() const { return loaded; }
 
-        bool Load() {
-            loaded = doLoad();
-            return loaded;
-        }
-
-        void Unload() {
-            doUnload();
-            loaded = false;
-        }
     protected:
-        virtual bool doLoad() = 0;
-        virtual void doUnload() = 0;
-    private:
         resource_id resourceId{};
         bool loaded { false };
     };
 
     class TestResource final : public Resource {
     public:
-        explicit TestResource(resource_id id ) : Resource(id), resourceId(id) {
+        explicit TestResource(resource_id id ) : resourceId(id) {
             std::cout << std::format("TestResource[{}] has been created\n",resourceId);
         }
 
@@ -59,19 +50,22 @@ export namespace andromeda {
 
         std::string TestMessage() const { return std::format("TestResource[{}]::TestMessage called. The type id for this class is {}",
             resourceId,TypeRegistry::getTypeID<ResourceCategory, TestResource>()); }
-    protected:
-        bool doLoad() { 
+    public:
+        bool Load() { 
+            if (loaded) return true;
             std::cout << std::format("TestResource[{}] has been loaded\n", resourceId);
-            return true;
+            return loaded = true;
         }
-        void doUnload() {
+        void Unload() {
+            if (!loaded) return;
             std::cout << std::format("TestResource[{}] has been unloaded\n", resourceId);
+            loaded = false;
         }
     private:
         resource_id resourceId{};
     };
 
-    template <class T>
+    template <ResourceConcept T>
     class ResourceHandle;
 
     class ResourceManager {
@@ -96,10 +90,18 @@ export namespace andromeda {
                 return ResourceHandle<T>(id, this);
             }
 
-            auto resource { std::make_shared<T>(id, std::forward<Args>(args)...) };
-            if(!resource->Load()) {
+            T* owning = new T(id, std::forward<Args>(args)...);
+
+            if(!owning || !owning->Load()) {
+                delete owning;
                 return {};
             }
+
+            std::shared_ptr<Resource> resource { owning,
+                [](Resource* resource) {
+                    static_cast<T*>(resource)->Unload();
+                    delete static_cast<T*>(resource);
+                } };
 
             scoped_resources[id] = resource;
             scoped_reference_counts[id].resource = resource;
@@ -144,7 +146,7 @@ export namespace andromeda {
                 if(it->second.refCount > 0) return;
                 auto resourceIt {scoped_resource.find(id)};
 
-                resourceIt->second->Unload();
+                static_cast<T*>(resourceIt->second.get())->Unload();
                 scoped_resource.erase(resourceIt);
                 scoped_references.erase(it);
             }
@@ -165,7 +167,7 @@ export namespace andromeda {
 
     };
 
-    template <typename T>
+    template <ResourceConcept T>
     class ResourceHandle {
     private:
         resource_id resourceId;

@@ -12,6 +12,9 @@ int main() {
 
     rm.Load<andromeda::TestResource>("TestingTesting");
     rm.Load<andromeda::TestResource>("OneTwoOneTwo");
+    
+
+    //rm.Load<andromeda::TestResource>("TypeError","Whoops! Too many arguments");
 
     auto test = rm.GetResource<andromeda::TestResource>("TestingTesting");
     std::cout << test->TestMessage() << "\n";
