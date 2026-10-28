@@ -170,8 +170,8 @@ export namespace andromeda {
     template <ResourceConcept T>
     class ResourceHandle {
     private:
-        resource_id resourceId;
-        ResourceManager *resourceManager;
+        resource_id resourceId{};
+        ResourceManager *resourceManager{nullptr};
     public:
         ResourceHandle() : resourceManager{nullptr} {}
         ResourceHandle(const std::string_view id, ResourceManager *manager) :
