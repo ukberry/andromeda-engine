@@ -7,11 +7,11 @@ import std.compat;
 
 #define VK_MAKE_VERSION(major,minor,patch) ((((uint32_t)(major)) << 22U) | (((uint32_t)(minor)) << 12U) | ((uint32_t)(patch)))
 
-#ifdef NDEBUG
-constexpr bool enableValidationLayers {false};
-#else
-constexpr bool enableValidationLayers {true};
-#endif
+// #ifdef NDEBUG
+// constexpr bool enableValidationLayers {false};
+// #else
+// constexpr bool enableValidationLayers {true};
+// #endif
 
 const std::vector<char const*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -19,99 +19,99 @@ const std::vector<char const*> validationLayers = {
 
 using namespace andromeda;
 
-void Application::initVulkan() {
-    createInstance();
-    setupDebugMessages();
-    createSurface();
-    selectPhysicalDevice();
-    createLogicalDevice();
-    createSwapChain();
-    createImageViews();
-}
+// void Application::initVulkan() {
+//     createInstance();
+//     setupDebugMessages();
+//     createSurface();
+//     selectPhysicalDevice();
+//     createLogicalDevice();
+//     createSwapChain();
+//     createImageViews();
+// }
 
-void Application::createInstance() {
-    constexpr vk::ApplicationInfo appInfo{
-        .pApplicationName = "Andromeda Application",
-        .applicationVersion = VK_MAKE_VERSION(1,0,0),
-        .pEngineName = "No Engine",
-        .engineVersion = VK_MAKE_VERSION(1,0,0),
-        .apiVersion = vk::ApiVersion14
-    };
+// void Application::createInstance() {
+//     constexpr vk::ApplicationInfo appInfo{
+//         .pApplicationName = "Andromeda Application",
+//         .applicationVersion = VK_MAKE_VERSION(1,0,0),
+//         .pEngineName = "No Engine",
+//         .engineVersion = VK_MAKE_VERSION(1,0,0),
+//         .apiVersion = vk::ApiVersion14
+//     };
 
-    std::vector<const char*> requiredLayers;
-    if (enableValidationLayers) {
-        requiredLayers.assign(validationLayers.begin(), validationLayers.end());
-    }
+//     std::vector<const char*> requiredLayers;
+//     if (enableValidationLayers) {
+//         requiredLayers.assign(validationLayers.begin(), validationLayers.end());
+//     }
 
-    const auto layerProperties { context.enumerateInstanceLayerProperties() };
-    assert(layerProperties.has_value(), "Unable to ascertain layer properties");
-    auto unsupportedIt = std::ranges::find_if(requiredLayers, [&layerProperties](const auto& requiredLayer) {
-        return std::ranges::none_of(layerProperties.value, [requiredLayer](const auto& layerProperty) {
-            return std::strcmp(layerProperty.layerName, requiredLayer) == 0;
-        });
-    });
+//     const auto layerProperties { context.enumerateInstanceLayerProperties() };
+//     assert(layerProperties.has_value(), "Unable to ascertain layer properties");
+//     auto unsupportedIt = std::ranges::find_if(requiredLayers, [&layerProperties](const auto& requiredLayer) {
+//         return std::ranges::none_of(layerProperties.value, [requiredLayer](const auto& layerProperty) {
+//             return std::strcmp(layerProperty.layerName, requiredLayer) == 0;
+//         });
+//     });
 
-    if (unsupportedIt != requiredLayers.end()) {
-        std::cerr << "Required layer not supported: " + std::string{*unsupportedIt} << std::endl;
-        std::terminate();
-    }
+//     if (unsupportedIt != requiredLayers.end()) {
+//         std::cerr << "Required layer not supported: " + std::string{*unsupportedIt} << std::endl;
+//         std::terminate();
+//     }
 
-    auto requiredExtensions { getRequiredGLFWExtensions() };
-    if (enableValidationLayers) requiredExtensions.push_back(vk::EXTDebugUtilsExtensionName);
+//     auto requiredExtensions { getRequiredGLFWExtensions() };
+//     if (enableValidationLayers) requiredExtensions.push_back(vk::EXTDebugUtilsExtensionName);
 
-    const auto extensionProperties { context.enumerateInstanceExtensionProperties() };
-    assert(extensionProperties.has_value(), "Unable to determine extension properties");
-    unsupportedIt = std::ranges::find_if(requiredExtensions, [&extensionProperties](const auto& requiredExtension){
-        return std::ranges::none_of(extensionProperties.value,[requiredExtension](const auto& extensionProperty) {
-            return std::strcmp(extensionProperty.extensionName, requiredExtension) == 0;
-        });
-    });
+//     const auto extensionProperties { context.enumerateInstanceExtensionProperties() };
+//     assert(extensionProperties.has_value(), "Unable to determine extension properties");
+//     unsupportedIt = std::ranges::find_if(requiredExtensions, [&extensionProperties](const auto& requiredExtension){
+//         return std::ranges::none_of(extensionProperties.value,[requiredExtension](const auto& extensionProperty) {
+//             return std::strcmp(extensionProperty.extensionName, requiredExtension) == 0;
+//         });
+//     });
 
-    if (unsupportedIt != requiredExtensions.end()) {
-        std::cerr << "Required extension not supported: " + std::string{*unsupportedIt} << std::endl;
-        std::terminate();
-    }
+//     if (unsupportedIt != requiredExtensions.end()) {
+//         std::cerr << "Required extension not supported: " + std::string{*unsupportedIt} << std::endl;
+//         std::terminate();
+//     }
 
-    vk::InstanceCreateInfo createInfo{
-        .pApplicationInfo = &appInfo,
-        .enabledLayerCount = static_cast<uint32_t>(requiredLayers.size()),
-        .ppEnabledLayerNames = requiredLayers.data(),
-        .enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size()),
-        .ppEnabledExtensionNames = requiredExtensions.data()
-    };
-    //instance = vk::raii::Instance{context, createInfo};
-    auto instance_create {context.createInstance(createInfo)};
-    assert(instance_create.has_value(), "Could not create vulkan instance");
-    instance = std::move(*instance_create);
-}
+//     vk::InstanceCreateInfo createInfo{
+//         .pApplicationInfo = &appInfo,
+//         .enabledLayerCount = static_cast<uint32_t>(requiredLayers.size()),
+//         .ppEnabledLayerNames = requiredLayers.data(),
+//         .enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size()),
+//         .ppEnabledExtensionNames = requiredExtensions.data()
+//     };
+//     //instance = vk::raii::Instance{context, createInfo};
+//     auto instance_create {context.createInstance(createInfo)};
+//     assert(instance_create.has_value(), "Could not create vulkan instance");
+//     instance = std::move(*instance_create);
+// }
 
-void Application::setupDebugMessages() {
-  if (!enableValidationLayers)
-    return;
+// void Application::setupDebugMessages() {
+//   if (!enableValidationLayers)
+//     return;
 
-  using Severity = vk::DebugUtilsMessageSeverityFlagBitsEXT;
-  using Type = vk::DebugUtilsMessageTypeFlagBitsEXT;
-  vk::DebugUtilsMessageSeverityFlagsEXT severityFlags{Severity::eWarning |
-                                                      Severity::eError};
-  vk::DebugUtilsMessageTypeFlagsEXT typeFlags{
-      Type::eGeneral | Type::ePerformance | Type::eValidation};
+//   using Severity = vk::DebugUtilsMessageSeverityFlagBitsEXT;
+//   using Type = vk::DebugUtilsMessageTypeFlagBitsEXT;
+//   vk::DebugUtilsMessageSeverityFlagsEXT severityFlags{Severity::eWarning |
+//                                                       Severity::eError};
+//   vk::DebugUtilsMessageTypeFlagsEXT typeFlags{
+//       Type::eGeneral | Type::ePerformance | Type::eValidation};
 
-  vk::DebugUtilsMessengerCreateInfoEXT createInfo{
-      .messageSeverity = severityFlags, .messageType = typeFlags,
-      .pfnUserCallback = &debugCallback
-  };
-  auto result {instance.createDebugUtilsMessengerEXT(createInfo)};
-  assert(result.has_value(), "Could not create a debug messenger");
-  debugMessenger = std::move(*result);
-}
+//   vk::DebugUtilsMessengerCreateInfoEXT createInfo{
+//       .messageSeverity = severityFlags, .messageType = typeFlags,
+//       .pfnUserCallback = &debugCallback
+//   };
+//   auto result {instance.createDebugUtilsMessengerEXT(createInfo)};
+//   assert(result.has_value(), "Could not create a debug messenger");
+//   debugMessenger = std::move(*result);
+// }
 
-VKAPI_ATTR vk::Bool32 VKAPI_CALL Application::debugCallback(
-    vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
-    vk::DebugUtilsMessageTypeFlagsEXT type,
-    const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
-  if (severity > vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
-    std::cerr << "Validation layer: type " << to_string(type)
-              << " msg: " << pCallbackData->pMessage << std::endl;
-  }
-  return vk::False;
-}
+// VKAPI_ATTR vk::Bool32 VKAPI_CALL Application::debugCallback(
+//     vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
+//     vk::DebugUtilsMessageTypeFlagsEXT type,
+//     const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
+//   if (severity > vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
+//     std::cerr << "Validation layer: type " << to_string(type)
+//               << " msg: " << pCallbackData->pMessage << std::endl;
+//   }
+//   return vk::False;
+// }

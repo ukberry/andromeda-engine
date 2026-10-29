@@ -27,11 +27,11 @@ target_sources(${ANDROMEDA}
     PUBLIC
     FILE_SET andromeda_module TYPE CXX_MODULES
     BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
-    FILES andromeda.cppm utility.cppm application.cppm resources.cppm
+    FILES andromeda.cppm utility.cppm application.cppm resources.cppm window.cppm 
     resource_management/shader-resource.cppm
 )
 if (NOT MSVC)
 target_compile_options(${ANDROMEDA} PUBLIC -fno-rtti -fno-exceptions -Werror -Wall -Wextra -Wpedantic -Wnarrowing -Wconversion)
 endif()
-target_sources(${ANDROMEDA} PRIVATE vulkan.cpp window.cpp device.cpp swapchain.cpp)
+target_sources(${ANDROMEDA} PRIVATE vulkan.cpp device.cpp swapchain.cpp)
 target_link_libraries(${ANDROMEDA} PRIVATE glfw VulkanCppModule)

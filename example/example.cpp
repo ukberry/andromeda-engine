@@ -1,7 +1,9 @@
 import andromeda;
 import std;
 
-class MyExampleApp : public andromeda::Application {
+using namespace andromeda;
+
+class MyExampleApp : public Application< Context<GLFWWindowPolicy>> {
 public:
  void loop() {
  }
@@ -22,6 +24,6 @@ int main() {
 
     std::cout << resource2->TestMessage() << std::endl;
 
-    // MyExampleApp app;
-    // app.run();
+    MyExampleApp app;
+    app.run();
 }

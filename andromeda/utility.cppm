@@ -5,6 +5,9 @@ export namespace andromeda {
     
     // Resource ID's will be based on the FNV-1a hash of a string
     typedef std::uint64_t resource_id;
+
+    template<typename WindowPolicy>
+    struct WindowTraits;
     
     class TypeRegistry {
     public:
