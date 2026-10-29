@@ -7,6 +7,8 @@ import :utility;
 import vulkan;
 import std;
 
+using WindowType = GLFWwindow;
+
 export namespace andromeda {
     class Application {
     public:
@@ -15,8 +17,8 @@ export namespace andromeda {
             initWindow();
             initVulkan();
 
-            while (!glfwWindowShouldClose(window.get())) {
-                glfwPollEvents();
+            while (!shouldWindowClose()) {
+                pollWindowEvents();
                 loop();
             }
             
@@ -26,7 +28,7 @@ export namespace andromeda {
     private:
         constexpr static int width {800};
         constexpr static int height {600};
-        std::unique_ptr<GLFWwindow,void(*)(GLFWwindow*)> window{nullptr, {}};
+        std::unique_ptr<WindowType,void(*)(WindowType*)> window{nullptr, {}};
 
         // Vulkan setup
         vk::raii::Context context;
@@ -63,6 +65,9 @@ export namespace andromeda {
 
         // window.cpp
         void createSurface();
+        std::pair<int,int> getWindowSize() const;
+        bool shouldWindowClose() const;
+        void pollWindowEvents();
 
         // device.cpp
         bool isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice);

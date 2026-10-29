@@ -1,5 +1,3 @@
-module;
-#include <GLFW/glfw3.h>
 module andromeda;
 import vulkan;
 
@@ -67,8 +65,7 @@ vk::Extent2D Application::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& cap
         return capabilities.currentExtent;
     }
 
-    int width, height;
-    glfwGetFramebufferSize(window.get(), &width, &height);
+    auto [width, height] = getWindowSize();
 
     return {
         std::clamp<std::uint32_t>(static_cast<std::uint32_t>(width), capabilities.minImageExtent.width, capabilities.maxImageExtent.width),

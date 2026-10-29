@@ -6,6 +6,8 @@ module andromeda;
 import vulkan;
 import std.compat;
 
+using WindowType = GLFWwindow;
+
 using namespace andromeda;
 
 void Application::initWindow() {
@@ -48,4 +50,18 @@ void Application::createSurface() {
         std::terminate();
     }
     surface = vk::raii::SurfaceKHR(instance, _surface);
+}
+
+std::pair<int,int> Application::getWindowSize() const {
+    std::pair<int,int> ret{};
+    glfwGetFramebufferSize(window.get(), &ret.first, &ret.second);
+    return ret;
+}
+
+bool Application::shouldWindowClose() const {
+    return glfwWindowShouldClose(window.get());
+}
+
+void Application::pollWindowEvents() {
+    glfwPollEvents();
 }
