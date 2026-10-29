@@ -22,7 +22,7 @@ public:
     bool Load() { 
         if (loaded) return true;
 
-        std::ifstream source{filename, std::ios::binary | std::ios::in | std::ios::end};
+        std::ifstream source{filename, std::ios::binary | std::ios::ate};
         if (!source.is_open()) {
             std::cerr << "Could not open file: " << filename << "\n";
             return false;
