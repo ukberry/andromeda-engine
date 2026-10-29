@@ -11,7 +11,10 @@ export namespace andromeda {
     class Resource;
 
     template <class T>
-    concept ResourceConcept = requires (T* resource) {
+    concept ResourceConcept =  
+        !std::is_copy_assignable_v<T> && !std::is_copy_constructible_v<T> &&
+        std::is_move_assignable_v<T>  && std::is_move_constructible_v<T> &&
+    requires (T* resource) {
         {resource->Load()} -> std::same_as<bool>;
         {resource->Unload()} -> std::same_as<void>;
         std::is_base_of_v<Resource,T>;
