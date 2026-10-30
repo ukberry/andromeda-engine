@@ -1,6 +1,3 @@
-module;
-#include <GLFW/glfw3.h>
-#include <vulkan/vk_platform.h>
 export module andromeda:application;
 
 export import :window_glfw;
@@ -8,13 +5,15 @@ export import :utility;
 import vulkan;
 import std;
 
-using WindowType = GLFWwindow;
-
 export namespace andromeda {
     
+    // CRTP template on all policies passed
     template <template <typename> class... Policies>
     class Context : public Policies<Context<Policies...>>... {
     public:
+        using WindowPolicy = typename GetWindowPolicy<Context, Policies...>::type;
+        //using WindowType = typename WindowTraits<WindowPolicy>::type;
+        using WindowType = typename GetWindowPolicy<Context, Policies...>::window_type;
         bool Initialise() {
 
             bool windowInitialised{};
@@ -23,8 +22,19 @@ export namespace andromeda {
             }
             return windowInitialised;
         }
-    private:
         
+        bool IsClosing() {
+            if constexpr (requires { {this->ShouldWindowClose()} -> std::same_as<bool>; }) {
+                return this->ShouldWindowClose();
+            }
+            return true;
+        }
+
+        void PollEvents() {
+            return this->PollWindowEvents();
+        }
+    public:
+        std::unique_ptr<WindowType,void(*)(WindowType*)> window{nullptr,{}};
     };
 
     template <class Context>
@@ -36,10 +46,10 @@ export namespace andromeda {
             // initWindow();
             // initVulkan();
 
-            // while (!shouldWindowClose()) {
-            //     pollWindowEvents();
-            //     loop();
-            // }
+            while (!context.IsClosing()) {
+                context.PollEvents();
+                loop();
+            }
             
         }
 

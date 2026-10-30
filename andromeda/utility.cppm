@@ -8,6 +8,24 @@ export namespace andromeda {
 
     template<typename WindowPolicy>
     struct WindowTraits;
+
+    template <typename Context, template<typename> class... Policies>
+    struct GetWindowPolicy;
+
+    template <typename Context>
+    struct GetWindowPolicy<Context> {
+        static_assert(sizeof(Context) == 0, "Template Error - GetWindowPolicy could not find a WindowPolicy!");
+    };
+
+    template <typename Context, template <typename> class First, template <typename> class... Rest>
+    requires requires { typename First<Context>::is_window_policy; }
+    struct GetWindowPolicy<Context, First, Rest...> {
+        using type = First<Context>;
+        using window_type = WindowTraits<First<Context>>::type;
+    };
+
+    template <typename Context, template <typename> class First, template <typename> class... Rest>
+    struct GetWindowPolicy<Context, First, Rest...> : GetWindowPolicy<Context,Rest...> {};
     
     class TypeRegistry {
     public:

@@ -1,6 +1,6 @@
 module;
 #include <vulkan/vk_platform.h>
-module andromeda;
+export module andromeda:graphics_vulkan;
 
 import vulkan;
 import std.compat;
@@ -16,6 +16,18 @@ import std.compat;
 const std::vector<char const*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
+
+export namespace andromeda {
+
+template <class Context>
+class VulkanGraphicsPolicy {
+public:
+    using is_graphics_policy = void;
+    
+};
+
+
+} // namespace: andromeda
 
 using namespace andromeda;
 

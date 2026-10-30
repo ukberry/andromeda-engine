@@ -66,17 +66,49 @@ export namespace andromeda {
 template <class Context>
 class GLFWWindowPolicy {
 public:
+    using is_window_policy = void;
+    using WindowType = GLFWwindow*;
     bool CreateWindow() {
         std::cout << "GLFW CreateWindow called\n";
+        if (!glfwInit()) {
+            std::cerr << "Could not load GLFW\n";
+            return false;
+        }
+
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // TODO: Support resizeable window
+        glfwWindowHint(GLFW_ICONIFIED, GLFW_TRUE);
+
+        std::unique_ptr<GLFWwindow,void(*)(GLFWwindow* win)>
+        win{glfwCreateWindow(800,600,"Test",nullptr,nullptr),
+        [](GLFWwindow* win) {
+            if(!win) return;
+            glfwDestroyWindow(win);
+            glfwTerminate();
+        }};
+
+        Context* context {static_cast<Context*>(this)};
+        context->window = std::move(win);
+
         return true;
     }
+
+    bool ShouldWindowClose() {
+        auto crtp_self {static_cast<Context*>(this)};
+        if(!crtp_self->window.get()) return true;
+        return glfwWindowShouldClose(crtp_self->window.get());
+    }
+
+    void PollWindowEvents() {
+        glfwPollEvents();
+    }
 private:
-    std::unique_ptr<GLFWwindow,void(*)(GLFWwindow*)> window{nullptr,{}};
+    std::unique_ptr<GLFWwindow,void(*)(GLFWwindow*)> window2{nullptr,{}};
 };
 
 template <class Context>
 struct WindowTraits<GLFWWindowPolicy<Context>> {
-    using type = GLFWwindow*;
+    using type = GLFWwindow;
 };
 
 } // namespace: andromeda
