@@ -2,6 +2,7 @@ export module andromeda:application;
 
 export import :window_glfw;
 export import :utility;
+export import :graphics_vulkan;
 import vulkan;
 import std;
 
@@ -12,6 +13,8 @@ export namespace andromeda {
     class Context : public Policies<Context<Policies...>>... {
     public:
         using WindowPolicy = typename GetWindowPolicy<Context, Policies...>::type;
+        
+        /// Two ways to obtain the window type; the window_type on the policy is most convenient
         //using WindowType = typename WindowTraits<WindowPolicy>::type;
         using WindowType = typename GetWindowPolicy<Context, Policies...>::window_type;
         bool Initialise() {
@@ -20,40 +23,32 @@ export namespace andromeda {
             if constexpr (requires { {this->CreateWindow()} -> std::same_as<bool>; } ) {
                 windowInitialised = this->CreateWindow();
             }
-            return windowInitialised;
-        }
-        
-        bool IsClosing() {
-            if constexpr (requires { {this->ShouldWindowClose()} -> std::same_as<bool>; }) {
-                return this->ShouldWindowClose();
-            }
-            return true;
-        }
 
-        void PollEvents() {
-            return this->PollWindowEvents();
+            bool graphicsInitialised{};
+            if constexpr (requires { {this->InitGraphics()} -> std::same_as<bool>; }) {
+                graphicsInitialised = this->InitGraphics();
+            }
+            return windowInitialised && graphicsInitialised;
         }
-    public:
-        std::unique_ptr<WindowType,void(*)(WindowType*)> window{nullptr,{}};
     };
 
     template <class Context>
     class Application {
     public:
-        void run() {
+        void Run() {
             std::cout << "Starting Andromeda application" << std::endl;
             context.Initialise();
             // initWindow();
             // initVulkan();
 
-            while (!context.IsClosing()) {
-                context.PollEvents();
-                loop();
+            while (!context.ShouldWindowClose()) {
+                context.PollWindowEvents();
+                Loop();
             }
             
         }
 
-        virtual void loop() {};
+        virtual void Loop() {};
     private:
         constexpr static int width {800};
         constexpr static int height {600};

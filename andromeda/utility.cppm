@@ -9,6 +9,7 @@ export namespace andromeda {
     template<typename WindowPolicy>
     struct WindowTraits;
 
+    // GetWindowPolicy will cycle through the Policies attached to a Context returning the first WindowPolicy
     template <typename Context, template<typename> class... Policies>
     struct GetWindowPolicy;
 
