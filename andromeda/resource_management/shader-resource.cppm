@@ -7,7 +7,7 @@ export namespace andromeda {
 
 class Shader final : public Resource {
 public:
-    explicit Shader(resource_id id, std::string_view Filename) : filename(Filename)  {
+    explicit Shader(resource_id id, vk::raii::Device* Device, std::string_view Filename) : filename(Filename), device(Device)  {
         this->resourceId = id;
     }
 
@@ -40,9 +40,9 @@ public:
             .pCode = reinterpret_cast<const std::uint32_t*>(buffer.data())
         };
 
-        (void)createInfo;
-        // TODO - Pass device
-        shaderModule = vk::raii::ShaderModule{nullptr};
+        auto shaderModuleCreate = device->createShaderModule(createInfo);
+        (assert)(shaderModuleCreate.has_value(), "Could not create shader: " + filename);
+        shaderModule = std::move(*shaderModuleCreate);
 
         loaded = true;
         return loaded;
@@ -50,8 +50,12 @@ public:
     void Unload() {
         if (!loaded) return;
     }
+    vk::raii::ShaderModule& GetShaderModule() {
+        return shaderModule;
+    }
 private:
     std::string filename{};
+    vk::raii::Device* device {nullptr};
     vk::raii::ShaderModule shaderModule{nullptr};
 };
 
