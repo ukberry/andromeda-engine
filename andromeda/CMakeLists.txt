@@ -15,10 +15,10 @@ target_compile_features(VulkanCppModule PUBLIC cxx_std_23)
 target_sources(VulkanCppModule
     PUBLIC
     FILE_SET cxx_modules TYPE CXX_MODULES
-    BASE_DIRS "${Vulkan_INCLUDE_DIR}"
-    FILES "${Vulkan_INCLUDE_DIR}/vulkan/vulkan.cppm"
+    BASE_DIRS "${Vulkan_INCLUDE_DIR}" "${SHARED_DOWNLOAD_DIR}/glm-src/glm"
+    FILES "${Vulkan_INCLUDE_DIR}/vulkan/vulkan.cppm" "${SHARED_DOWNLOAD_DIR}/glm-src/glm/glm.cppm"
 )
-target_link_libraries(VulkanCppModule PUBLIC Vulkan::Vulkan)
+target_link_libraries(VulkanCppModule PUBLIC Vulkan::Vulkan glm::glm)
 
 set(ANDROMEDA andromeda)
 add_library(${ANDROMEDA})

@@ -1,10 +1,10 @@
 module;
-#include <glm/glm.hpp>
 #include <vulkan/vk_platform.h>
 export module andromeda:graphics_vulkan;
 
+import glm;
 import vulkan;
-import std.compat;
+import std;
 import :utility;
 
 import :shaders;
@@ -273,8 +273,9 @@ private:
         vk::KHRSwapchainExtensionName
     };
 
-    vk::raii::Pipeline graphicsPipeline {nullptr};
+    vk::raii::DescriptorSetLayout descriptorSetLayout {nullptr};
     vk::raii::PipelineLayout pipelineLayout {nullptr};
+    vk::raii::Pipeline graphicsPipeline {nullptr};
 
     /// Swapchain functions ///
     void CreateSwapChain() {
@@ -377,6 +378,21 @@ vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& 
     return std::ranges::any_of(availablePresentModes,[](const vk::PresentModeKHR presentMode) {
         return presentMode == vk::PresentModeKHR::eMailbox;
     }) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
+
+}
+
+void CreateDescriptorSetLayout () {
+    vk::DescriptorSetLayoutBinding uboLayoutBinding {
+        .binding = 0, .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = 1, .stageFlags = vk::ShaderStageFlagBits::eVertex
+    };
+    vk::DescriptorSetLayoutCreateInfo layoutInfo {
+        .bindingCount = 1,
+        .pBindings = &uboLayoutBinding
+    };
+    auto descriptorSetLayoutCreate = device.createDescriptorSetLayout(layoutInfo);
+    (assert)(descriptorSetLayoutCreate.has_value(), "Could not create descriptor set layout");
+    descriptorSetLayout = std::move(descriptorSetLayoutCreate.value);
 
 }
 
