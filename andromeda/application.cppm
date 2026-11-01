@@ -42,8 +42,6 @@ export namespace andromeda {
                 std::cerr << "Could not initialise the game engine context" << std::endl;
                 return;
             }
-            // initWindow();
-            // initVulkan();
 
             while (!context.ShouldWindowClose()) {
                 context.PollWindowEvents();
