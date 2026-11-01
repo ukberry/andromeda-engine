@@ -31,6 +31,7 @@ target_sources(${ANDROMEDA}
     resource_management/shader-resource.cppm
 )
 if (NOT MSVC)
-target_compile_options(${ANDROMEDA} PUBLIC -fno-rtti -fno-exceptions -Werror -Wall -Wextra -Wpedantic -Wnarrowing -Wconversion)
+# -Wconversion not possible with GCC because of GLM compilation errors
+target_compile_options(${ANDROMEDA} PUBLIC -fno-rtti -fno-exceptions -Werror -Wall -Wextra -Wpedantic -Wnarrowing)
 endif()
-target_link_libraries(${ANDROMEDA} PRIVATE glm glfw VulkanCppModule)
+target_link_libraries(${ANDROMEDA} PRIVATE glfw VulkanCppModule)
