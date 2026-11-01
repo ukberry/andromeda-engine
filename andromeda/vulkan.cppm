@@ -1,10 +1,13 @@
 module;
+#include <glm/glm.hpp>
 #include <vulkan/vk_platform.h>
 export module andromeda:graphics_vulkan;
 
 import vulkan;
 import std.compat;
 import :utility;
+
+import :shaders;
 
 #define VK_MAKE_VERSION(major,minor,patch) ((((uint32_t)(major)) << 22U) | (((uint32_t)(minor)) << 12U) | ((uint32_t)(patch)))
 
@@ -20,16 +23,21 @@ const std::vector<char const*> validationLayers = {
 
 export namespace andromeda {
 
-VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(
-    vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
-    vk::DebugUtilsMessageTypeFlagsEXT type,
-    const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
-  if (severity > vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
-    std::cerr << "Validation layer: type " << to_string(type)
-              << " msg: " << pCallbackData->pMessage << std::endl;
-  }
-  return vk::False;
-}
+struct Vertex {
+    glm::vec2 pos;
+    glm::vec3 colour;
+
+    static vk::VertexInputBindingDescription GetBindingDescription() {
+    return {.binding = 0, .stride = sizeof(Vertex), .inputRate = vk::VertexInputRate::eVertex};
+    }
+
+    static std::array<vk::VertexInputAttributeDescription,2> GetAttributeDescription() {
+        return {{
+            {.location = 0, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(Vertex, pos)},
+            {.location = 1, .binding = 0, .format = vk::Format::eR32G32B32Sfloat, .offset = offsetof(Vertex, colour)}
+        }};
+    }
+};
 
 template <class Context>
 class VulkanGraphicsPolicy {
@@ -44,6 +52,7 @@ public:
         CreateLogicalDevice();
         CreateSwapChain();
         CreateImageViews();
+        CreateGraphicsPipeline();
 
         if (surface != nullptr) return true;
         return false;
@@ -64,7 +73,7 @@ public:
         }
 
         const auto layerProperties { context.enumerateInstanceLayerProperties() };
-        assert(layerProperties.has_value(), "Unable to ascertain layer properties");
+        (assert)(layerProperties.has_value(), "Unable to ascertain layer properties");
         auto unsupportedIt = std::ranges::find_if(requiredLayers, [&layerProperties](const auto& requiredLayer) {
             return std::ranges::none_of(layerProperties.value, [requiredLayer](const auto& layerProperty) {
                 return std::strcmp(layerProperty.layerName, requiredLayer) == 0;
@@ -80,7 +89,7 @@ public:
         if (enableValidationLayers) requiredExtensions.push_back(vk::EXTDebugUtilsExtensionName);
 
         const auto extensionProperties { context.enumerateInstanceExtensionProperties() };
-        assert(extensionProperties.has_value(), "Unable to determine extension properties");
+        (assert)(extensionProperties.has_value(), "Unable to determine extension properties");
         unsupportedIt = std::ranges::find_if(requiredExtensions, [&extensionProperties](const auto& requiredExtension){
             return std::ranges::none_of(extensionProperties.value,[requiredExtension](const auto& extensionProperty) {
                 return std::strcmp(extensionProperty.extensionName, requiredExtension) == 0;
@@ -101,9 +110,20 @@ public:
         };
         //instance = vk::raii::Instance{context, createInfo};
         auto instance_create {context.createInstance(createInfo)};
-        assert(instance_create.has_value(), "Could not create vulkan instance");
+        (assert)(instance_create.has_value(), "Could not create vulkan instance");
         instance = std::move(*instance_create);
     }
+
+    VKAPI_ATTR static vk::Bool32 VKAPI_CALL DebugCallback(
+    vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
+    vk::DebugUtilsMessageTypeFlagsEXT type,
+    const vk::DebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
+  if (severity > vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
+    std::cerr << "Validation layer: type " << to_string(type)
+              << " msg: " << pCallbackData->pMessage << std::endl;
+  }
+  return vk::False;
+}
 
 void SetupDebugMessages() {
   if (!enableValidationLayers)
@@ -121,7 +141,7 @@ void SetupDebugMessages() {
       .pfnUserCallback = &DebugCallback
   };
   auto result {instance.createDebugUtilsMessengerEXT(createInfo)};
-  assert(result.has_value(), "Could not create a debug messenger");
+  (assert)(result.has_value(), "Could not create a debug messenger");
   debugMessenger = std::move(*result);
 }
 
@@ -163,7 +183,7 @@ bool IsDeviceSuitable(
 
 void SelectPhysicalDevice() {
     auto [result,physicalDevices] = instance.enumeratePhysicalDevices();
-    assert(result == vk::Result::eSuccess,"Enumerate physical devices failed.");
+    (assert)(result == vk::Result::eSuccess,"Enumerate physical devices failed.");
     auto deviceIt = std::ranges::find_if(physicalDevices,[&](const auto& physicalDevice) {
         return IsDeviceSuitable(physicalDevice);
     });
@@ -217,7 +237,7 @@ void CreateLogicalDevice() {
 
         std::uint32_t queueCount {0u};
         auto [result,device_create] = physicalDevice.createDevice(deviceCreateInfo);
-        assert(result == vk::Result::eSuccess, "Failed to created a physical device reference");
+        (assert)(result == vk::Result::eSuccess, "Failed to created a physical device reference");
         device = std::move(device_create);
         queue = device.getQueue(queueIndex, queueCount);
     }
@@ -253,6 +273,9 @@ private:
         vk::KHRSwapchainExtensionName
     };
 
+    vk::raii::Pipeline graphicsPipeline {nullptr};
+    vk::raii::PipelineLayout pipelineLayout {nullptr};
+
     /// Swapchain functions ///
     void CreateSwapChain() {
     const vk::SurfaceCapabilitiesKHR surfaceCapabilities { physicalDevice.getSurfaceCapabilitiesKHR(*surface).value };
@@ -281,10 +304,10 @@ private:
     };
     //swapChain = vk::raii::SwapchainKHR{device, swapChainCreateInfo};
     auto swapchain_create {device.createSwapchainKHR(swapChainCreateInfo)};
-    assert(swapchain_create.has_value(),"Could not create a swap chain");
+    (assert)(swapchain_create.has_value(),"Could not create a swap chain");
     swapChain = std::move(*swapchain_create);
     auto images_create {swapChain.getImages()};
-    assert(images_create.has_value(),"Unable to get swapchain images");
+    (assert)(images_create.has_value(),"Unable to get swapchain images");
     swapChainImages = std::move(*images_create);   
 }
 
@@ -306,7 +329,7 @@ void CreateImageViews() {
     for (auto& image : swapChainImages) {
         imageViewCreateInfo.image = image;
         auto image_view {device.createImageView(imageViewCreateInfo)};
-        assert(image_view.has_value(), "Could not create an ImageView");
+        (assert)(image_view.has_value(), "Could not create an ImageView");
         swapChainImageViews.push_back(std::move(*image_view));
     }
 }
@@ -335,7 +358,7 @@ std::uint32_t ChooseSwapMinImageCount(const vk::SurfaceCapabilitiesKHR& capabili
 vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
 
     // We ensure we have at least one format
-    assert (!availableFormats.empty(),"Cannot choose SwapSurfaceFormat from empty container.");
+    (assert) (!availableFormats.empty(),"Cannot choose SwapSurfaceFormat from empty container.");
 
     const auto formatIt = std::ranges::find_if(availableFormats,[](const vk::SurfaceFormatKHR& format) {
         return format.format == vk::Format::eB8G8R8A8Srgb && format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear;
@@ -346,7 +369,7 @@ vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormat
 vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) {
     
     // eFifo must be guaranteed by the implementation
-    assert (std::ranges::any_of(availablePresentModes,[](const vk::PresentModeKHR presentMode){
+    (assert) (std::ranges::any_of(availablePresentModes,[](const vk::PresentModeKHR presentMode){
         return presentMode == vk::PresentModeKHR::eFifo;
     }),"Vulkan implementation must implement eFifo present mode.");
 
@@ -355,6 +378,103 @@ vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& 
         return presentMode == vk::PresentModeKHR::eMailbox;
     }) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
 
+}
+
+
+
+/// TEMP DATA ///
+const std::vector<Vertex> vertices  {
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+};
+const std::vector<uint16_t> indices = {
+    0, 1, 2, 2, 3, 0
+};
+/// END TEMP DATA ///
+
+void CreateGraphicsPipeline() {
+    ResourceManager rm;
+    auto shader {rm.Load<Shader>("default_shader", std::addressof(device), "shaders/slang.spv")};
+
+    vk::PipelineShaderStageCreateInfo vertShaderCreateInfo{
+        .stage = vk::ShaderStageFlagBits::eVertex, .module = shader->GetShaderModule() , .pName = "vertMain"
+    };
+    vk::PipelineShaderStageCreateInfo fragShaderCreateInfo{
+        .stage = vk::ShaderStageFlagBits::eFragment, .module = shader->GetShaderModule() , .pName = "fragMain"
+    };
+    vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderCreateInfo, fragShaderCreateInfo};
+
+    auto bindingDescription {Vertex::GetBindingDescription()};
+    auto attributeDescription {Vertex::GetAttributeDescription()};
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo {
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &bindingDescription,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size()),
+        .pVertexAttributeDescriptions = attributeDescription.data()
+    };
+    vk::PipelineInputAssemblyStateCreateInfo inputAssembly {.topology = vk::PrimitiveTopology::eTriangleList};
+    vk::PipelineViewportStateCreateInfo viewportState{.viewportCount = 1, .scissorCount = 1};
+
+    vk::PipelineRasterizationStateCreateInfo rasteriser {
+        .depthClampEnable = vk::False,
+        .rasterizerDiscardEnable = vk::False,
+        .polygonMode = vk::PolygonMode::eFill,
+        .cullMode = vk::CullModeFlagBits::eBack,
+        .frontFace = vk::FrontFace::eCounterClockwise,
+        .depthBiasEnable = vk::False,
+        .lineWidth = 1.0f
+    };
+
+    vk::PipelineMultisampleStateCreateInfo multisampling {
+        .rasterizationSamples = vk::SampleCountFlagBits::e1, .sampleShadingEnable = vk::False
+    };
+    vk::PipelineColorBlendAttachmentState colourBlendAttachment {
+        .blendEnable = vk::False,
+        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+             vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+    };
+    vk::PipelineColorBlendStateCreateInfo colourBlending{
+        .logicOpEnable = vk::False, .logicOp = vk::LogicOp::eCopy, .attachmentCount = 1, .pAttachments = &colourBlendAttachment
+    };
+
+    std::vector<vk::DynamicState> dynamicStates = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
+    vk::PipelineDynamicStateCreateInfo dynamicStateInfo {
+        .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
+        .pDynamicStates = dynamicStates.data()
+    };
+
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo {
+        .setLayoutCount = 0, .pushConstantRangeCount = 0
+    };
+    auto pipelineLayoutCreate = device.createPipelineLayout(pipelineLayoutInfo);
+    (assert)(pipelineLayoutCreate.has_value(), "Pipeline layout creation failed");
+    pipelineLayout = std::move(*pipelineLayoutCreate);
+
+    vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain = {
+        {
+            .stageCount = 2,
+            .pStages = shaderStages,
+            .pVertexInputState = &vertexInputInfo,
+            .pInputAssemblyState = &inputAssembly,
+            .pViewportState = &viewportState,
+            .pRasterizationState = &rasteriser,
+            .pMultisampleState = &multisampling,
+            .pColorBlendState = &colourBlending,
+            .pDynamicState = &dynamicStateInfo,
+            .layout = pipelineLayout,
+            .renderPass = nullptr
+        },
+        {
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &swapChainSurfaceFormat.format
+        }
+    };
+    auto graphicsPipelineCreate = device.createGraphicsPipeline(nullptr,
+        pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>());
+    (assert)(graphicsPipelineCreate.has_value(), "Failed to create the graphics pipeline");
+    graphicsPipeline = std::move(*graphicsPipelineCreate);
 }
 
 };
