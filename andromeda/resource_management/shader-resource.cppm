@@ -11,14 +11,6 @@ public:
         this->resourceId = id;
     }
 
-    Shader(Shader&&) = default;
-    Shader& operator=(Shader&&) = default;
-
-    ~Shader() {
-        std::cout << "Shader resource " << filename << " freed. ";
-        std::cout << "The type id for this class is " << TypeRegistry::getTypeID<ResourceCategory,Shader>() << "\n";
-    }
-
     bool Load() { 
         if (loaded) return true;
 
