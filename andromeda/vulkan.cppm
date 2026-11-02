@@ -17,6 +17,8 @@ constexpr bool enableValidationLayers {false};
 constexpr bool enableValidationLayers {true};
 #endif
 
+constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+
 const std::vector<char const*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
@@ -277,6 +279,9 @@ private:
     vk::raii::PipelineLayout pipelineLayout {nullptr};
     vk::raii::Pipeline graphicsPipeline {nullptr};
 
+    vk::raii::CommandPool commandPool {nullptr};
+    std::vector<vk::raii::CommandBuffer> commandBuffers;
+
     /// Swapchain functions ///
     void CreateSwapChain() {
     const vk::SurfaceCapabilitiesKHR surfaceCapabilities { physicalDevice.getSurfaceCapabilitiesKHR(*surface).value };
@@ -491,6 +496,29 @@ void CreateGraphicsPipeline() {
         pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>());
     (assert)(graphicsPipelineCreate.has_value(), "Failed to create the graphics pipeline");
     graphicsPipeline = std::move(*graphicsPipelineCreate);
+}
+
+void CreateCommandPool() {
+    vk::CommandPoolCreateInfo poolInfo{
+        .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+        .queueFamilyIndex = queueIndex
+    };
+    
+    auto commandPoolCreate = device.createCommandPool(poolInfo);
+    (assert)(commandPoolCreate.has_value(), "Could not create command pool");
+    commandPool = std::move(commandPoolCreate.value);
+}
+
+void CreateCommandBuffers() {
+    vk::CommandBufferAllocateInfo allocInfo {
+        .commandPool = commandPool,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .commandBufferCount = MAX_FRAMES_IN_FLIGHT
+    };
+    
+    auto commandBuffersCreate = device.allocateCommandBuffers(allocInfo);
+    (assert)(commandBuffersCreate.has_value(), "Could not allocate command buffers");
+    commandBuffers = std::move(commandBuffersCreate.value);
 }
 
 };
