@@ -521,6 +521,36 @@ void CreateCommandBuffers() {
     commandBuffers = std::move(commandBuffersCreate.value);
 }
 
+std::uint32_t FindMemoryType(std::uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
+    
+    vk::PhysicalDeviceMemoryProperties memProperties {physicalDevice.getMemoryProperties()};
+
+    for (std::uint32_t i{}; i < memProperties.memoryTypeCount; i++) {
+        if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+            return i;
+    }
+}
+
+std::pair <vk::raii::Buffer, vk::raii::DeviceMemory>
+    createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
+
+    vk::BufferCreateInfo bufferInfo {
+        .size = size, .usage = usage, .sharingMode = vk::SharingMode::eExclusive
+    };
+    auto buffer { device.createBuffer(bufferInfo) };
+    (assert)(buffer.has_value(), "Could not create buffer");
+    
+    vk::MemoryRequirements memRequirements {buffer->getMemoryRequirements()};
+    vk::MemoryAllocateInfo allocInfo {
+        .allocationSize = memRequirements.size,
+        .memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties)
+    };
+    auto bufferMemory { device.allocateMemory(allocInfo) };
+    (assert)(bufferMemory.has_value(), "Could not allocate device memory");
+    buffer->bindMemory(*bufferMemory.value, 0);
+    return {std::move(buffer.value), std::move(bufferMemory.value)};
+}
+
 };
 
 } // namespace: andromeda
