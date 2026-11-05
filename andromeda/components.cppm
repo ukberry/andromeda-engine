@@ -25,6 +25,4 @@ namespace andromeda {
         std::vector<std::unique_ptr<Component>> components;
     };
 
-
-
 }
