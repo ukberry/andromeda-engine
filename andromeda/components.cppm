@@ -57,7 +57,7 @@ namespace andromeda {
 
             if (it == componentMap.end()) return false;
 
-            const T* componentPtr {it->second};
+            T* componentPtr {it->second};
             componentMap.erase(it);
 
             return std::erase_if(components, [componentPtr](const auto& component) {
