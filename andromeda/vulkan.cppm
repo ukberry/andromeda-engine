@@ -532,7 +532,7 @@ std::uint32_t FindMemoryType(std::uint32_t typeFilter, vk::MemoryPropertyFlags p
 }
 
 std::pair <vk::raii::Buffer, vk::raii::DeviceMemory>
-    createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
+    CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
 
     vk::BufferCreateInfo bufferInfo {
         .size = size, .usage = usage, .sharingMode = vk::SharingMode::eExclusive
