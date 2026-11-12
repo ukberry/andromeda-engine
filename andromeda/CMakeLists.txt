@@ -28,7 +28,7 @@ target_sources(${ANDROMEDA}
     FILE_SET andromeda_module TYPE CXX_MODULES
     BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES andromeda.cppm utility.cppm application.cppm resources.cppm window.cppm vulkan.cppm
-    resource_management/shader-resource.cppm components.cppm
+    resource_management/shader-resource.cppm components.cppm scene_management/culling-system.cppm
 )
 if (NOT MSVC)
 # -Wconversion not possible with GCC because of GLM compilation errors
